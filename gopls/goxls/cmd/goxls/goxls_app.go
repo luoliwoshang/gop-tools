@@ -4,8 +4,13 @@
 
 package main
 
-import "golang.org/x/tools/gopls/goxls"
+import (
+	"log"
+
+	"golang.org/x/tools/gopls/goxls"
+)
 
 func main() {
+	log.Println("goxls starting...")
 	goxls.Main(goxls.FlagsDebug)
 }
