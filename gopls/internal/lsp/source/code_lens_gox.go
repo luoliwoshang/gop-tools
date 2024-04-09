@@ -32,9 +32,11 @@ func GopLensFuncs() map[command.Command]LensFunc {
 }
 
 func gopRunTestCodeLens(ctx context.Context, snapshot Snapshot, fh FileHandle) ([]protocol.CodeLens, error) {
+	log.Printf("gopRunTestCodeLens: %s\n", fh.URI())
 	var codeLens []protocol.CodeLens
-
 	pkg, pgf, err := NarrowestPackageForGopFile(ctx, snapshot, fh.URI())
+	// printf pkg's info
+	log.Printf("gopRunTestCodeLens: pkg - %v, pgf - %v\n", pkg, pgf)
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +49,7 @@ func gopRunTestCodeLens(ctx context.Context, snapshot Snapshot, fh FileHandle) (
 	}
 	puri := protocol.URIFromSpanURI(fh.URI())
 	for _, fn := range fns.Tests {
+		log.Printf("gopRunTestCodeLens: %s\n", fn.Name)
 		cmd, err := command.NewTestCommand("run test", puri, []string{fn.Name}, nil)
 		if err != nil {
 			return nil, err
@@ -181,8 +184,10 @@ func gopToggleDetailsCodeLens(ctx context.Context, snapshot Snapshot, fh FileHan
 }
 
 func gopCommandCodeLens(ctx context.Context, snapshot Snapshot, fh FileHandle) ([]protocol.CodeLens, error) {
+	log.Printf("gopCommandCodeLens: %s\n", fh.URI().Filename())
 	filename := fh.URI().Filename()
 	if strings.HasSuffix(filename, "_test.go") || strings.HasSuffix(filename, "_test.gop") {
+		log.Printf("gopCommandCodeLens: %s 是个测试文件，不需要 run main package\n", filename)
 		return nil, nil
 	}
 	pgf, err := snapshot.ParseGop(ctx, fh, parser.PackageClauseOnly)

@@ -7,6 +7,7 @@ package lsp
 import (
 	"context"
 	"fmt"
+	"log"
 	"sort"
 
 	"golang.org/x/tools/gopls/internal/lsp/command"
@@ -18,6 +19,7 @@ import (
 )
 
 func (s *Server) codeLens(ctx context.Context, params *protocol.CodeLensParams) ([]protocol.CodeLens, error) {
+	log.Printf("get codelens")
 	ctx, done := event.Start(ctx, "lsp.Server.codeLens", tag.URI.Of(params.TextDocument.URI))
 	defer done()
 
@@ -59,5 +61,6 @@ func (s *Server) codeLens(ctx context.Context, params *protocol.CodeLensParams) 
 		}
 		return a.Command.Command < b.Command.Command
 	})
+	log.Printf("get codelens: %d", len(result))
 	return result, nil
 }
