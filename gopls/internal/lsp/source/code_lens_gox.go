@@ -182,7 +182,7 @@ func gopToggleDetailsCodeLens(ctx context.Context, snapshot Snapshot, fh FileHan
 
 func gopCommandCodeLens(ctx context.Context, snapshot Snapshot, fh FileHandle) ([]protocol.CodeLens, error) {
 	filename := fh.URI().Filename()
-	if strings.HasSuffix(filename, "_test.go") || strings.HasSuffix(filename, "_test.gop") {
+	if strings.HasSuffix(filename, "_test.go") || strings.HasSuffix(filename, "_test.gop") || strings.HasSuffix(filename, "_ytest.gox") {
 		return nil, nil
 	}
 	pgf, err := snapshot.ParseGop(ctx, fh, parser.PackageClauseOnly)
