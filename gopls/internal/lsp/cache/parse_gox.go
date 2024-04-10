@@ -77,6 +77,7 @@ func parseGopImpl(ctx context.Context, mod *gopmod.Module, fset *token.FileSet, 
 //
 // The provided ctx is used only for logging.
 func ParseGopSrc(ctx context.Context, mod *gopmod.Module, fset *token.FileSet, uri span.URI, src []byte, mode parser.Mode, purgeFuncBodies bool) (res *source.ParsedGopFile, fixes []fixType) {
+	// log.Printf("ParseGopSrc: %s", uri)
 	if purgeFuncBodies {
 		src = goplsastutil.PurgeFuncBodies(src)
 	}
@@ -90,6 +91,12 @@ func ParseGopSrc(ctx context.Context, mod *gopmod.Module, fset *token.FileSet, u
 	}
 
 	file, err := parserutil.ParseFileEx(mod, fset, uri.Filename(), src, mode)
+	// 遍历输出这个file的ast
+	log.Println("ast.Inspect")
+	ast.Inspect(file, func(n ast.Node) bool {
+		log.Printf("%T\n", n)
+		return true
+	})
 	var parseErr scanner.ErrorList
 	if err != nil {
 		// We passed a byte slice, so the only possible error is a parse error.

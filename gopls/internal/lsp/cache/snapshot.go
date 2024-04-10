@@ -712,6 +712,7 @@ func (s *snapshot) MethodSets(ctx context.Context, ids ...PackageID) ([]*methods
 }
 
 func (s *snapshot) MetadataForFile(ctx context.Context, uri span.URI) ([]*source.Metadata, error) {
+	log.Printf("开始获得 %s 的元数据", uri)
 	if s.view.ViewType() == AdHocView {
 		// As described in golang/go#57209, in ad-hoc workspaces (where we load ./
 		// rather than ./...), preempting the directory load with file loads can

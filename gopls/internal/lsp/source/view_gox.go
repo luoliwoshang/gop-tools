@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"go/types"
+	"log"
 	"path/filepath"
 
 	"github.com/goplus/gop"
@@ -165,10 +166,13 @@ func (m *Metadata) GopImporter(fset *token.FileSet) types.Importer {
 // Type-checking is expensive. Call snapshot.ParseGo if all you need
 // is a parse tree, or snapshot.MetadataForFile if you only need metadata.
 func NarrowestPackageForGopFile(ctx context.Context, snapshot Snapshot, uri span.URI) (Package, *ParsedGopFile, error) {
+	log.Printf("开始获得最窄包")
 	metas, err := snapshot.MetadataForFile(ctx, uri)
 	if err != nil {
+		log.Fatal("metadata获得错误", uri, err)
 		return nil, nil, err
 	}
+	log.Printf("metadata长度 %d", len(metas))
 	RemoveIntermediateTestVariants(&metas)
 	if len(metas) == 0 {
 		return nil, nil, fmt.Errorf("no package metadata for file %s", uri)
@@ -183,5 +187,6 @@ func NarrowestPackageForGopFile(ctx context.Context, snapshot Snapshot, uri span
 	if err != nil {
 		return nil, nil, err // "can't happen"
 	}
+	log.Printf("获得最窄包结束")
 	return pkg, pgf, err
 }

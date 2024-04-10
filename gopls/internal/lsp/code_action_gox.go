@@ -58,6 +58,9 @@ func (s *Server) gopCodeAction(
 	// Only compute quick fixes if there are any diagnostics to fix.
 	wantQuickFixes := want[protocol.QuickFix] && len(diagnostics) > 0
 
+	// 输出是否 wantQuickFixes
+	log.Println("gopCodeAction wantQuickFixes:", wantQuickFixes)
+
 	// Code actions requiring syntax information alone.
 	if wantQuickFixes || want[protocol.SourceOrganizeImports] || want[protocol.RefactorExtract] {
 		pgf, err := snapshot.ParseGop(ctx, fh, parserutil.ParseFull)
@@ -129,6 +132,7 @@ func (s *Server) gopCodeAction(
 	if len(stubMethodsDiagnostics) > 0 || want[protocol.RefactorRewrite] || want[protocol.GoTest] {
 		pkg, pgf, err := source.NarrowestPackageForGopFile(ctx, snapshot, fh.URI())
 		if err != nil {
+			log.Printf("读取窄包失败: %s", err)
 			return nil, err
 		}
 		for _, pd := range stubMethodsDiagnostics {

@@ -6,6 +6,7 @@ package lsp
 
 import (
 	"context"
+	"log"
 
 	"golang.org/x/tools/gopls/internal/lsp/protocol"
 	"golang.org/x/tools/gopls/internal/lsp/source"
@@ -18,11 +19,13 @@ func (s *Server) documentSymbol(ctx context.Context, params *protocol.DocumentSy
 	ctx, done := event.Start(ctx, "lsp.Server.documentSymbol", tag.URI.Of(params.TextDocument.URI))
 	defer done()
 
+	log.Printf("获得document symbol, uri: %s", params.TextDocument.URI)
 	snapshot, fh, ok, release, err := s.beginFileRequest(ctx, params.TextDocument.URI, source.UnknownKind)
 	defer release()
 	if !ok {
 		return []interface{}{}, err
 	}
+
 	var docSymbols []protocol.DocumentSymbol
 	switch snapshot.View().FileKind(fh) {
 	case source.Tmpl:
@@ -30,6 +33,7 @@ func (s *Server) documentSymbol(ctx context.Context, params *protocol.DocumentSy
 	case source.Go:
 		docSymbols, err = source.DocumentSymbols(ctx, snapshot, fh)
 	case source.Gop:
+		log.Printf("开始获得Go+文件的document symbol")
 		docSymbols, err = source.GopDocumentSymbols(ctx, snapshot, fh)
 	default:
 		return []interface{}{}, nil

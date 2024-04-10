@@ -7,6 +7,7 @@ package source
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
@@ -17,6 +18,7 @@ import (
 )
 
 func GopDocumentSymbols(ctx context.Context, snapshot Snapshot, fh FileHandle) ([]protocol.DocumentSymbol, error) {
+	log.Printf("GopDocumentSymbols")
 	ctx, done := event.Start(ctx, "source.GopDocumentSymbols")
 	defer done()
 
