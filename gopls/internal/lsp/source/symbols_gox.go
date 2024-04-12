@@ -25,7 +25,7 @@ func GopDocumentSymbols(ctx context.Context, snapshot Snapshot, fh FileHandle) (
 		return nil, fmt.Errorf("getting file for GopDocumentSymbols: %w", err)
 	}
 	file := pgf.File
-	classType, _ := parserutil.GetClassType(file, fh.URI().Filename())
+	classType, isTest := parserutil.GetClassType(file, fh.URI().Filename())
 	// Build symbols for file declarations. When encountering a declaration with
 	// errors (typically because positions are invalid), we skip the declaration
 	// entirely. VS Code fails to show any symbols if one of the top-level
@@ -49,6 +49,9 @@ func GopDocumentSymbols(ctx context.Context, snapshot Snapshot, fh FileHandle) (
 						} else {
 							name = "Main"
 						}
+					}
+					if decl.Shadow && name == "Main" && isTest {
+						name = "TestMain" //test gox file
 					}
 					if !decl.IsClass && decl.Recv != nil && len(decl.Recv.List) > 0 {
 						fs.Name = fmt.Sprintf("(%s).%s", typesutil.ExprString(decl.Recv.List[0].Type), fs.Name)
