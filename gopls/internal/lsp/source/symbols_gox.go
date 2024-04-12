@@ -27,12 +27,13 @@ func GopDocumentSymbols(ctx context.Context, snapshot Snapshot, fh FileHandle) (
 		return nil, fmt.Errorf("getting file for GopDocumentSymbols: %w", err)
 	}
 	file := pgf.File
-	classType, _ := parserutil.GetClassType(file, fh.URI().Filename())
+	classType, isTest := parserutil.GetClassType(file, fh.URI().Filename())
 	// Build symbols for file declarations. When encountering a declaration with
 	// errors (typically because positions are invalid), we skip the declaration
 	// entirely. VS Code fails to show any symbols if one of the top-level
 	// symbols is missing position information.
 	var symbols []protocol.DocumentSymbol
+	log.Printf("isClass %t isTest %t", file.IsClass, isTest)
 	for _, decl := range file.Decls {
 		switch decl := decl.(type) {
 		case *ast.FuncDecl:
@@ -41,7 +42,9 @@ func GopDocumentSymbols(ctx context.Context, snapshot Snapshot, fh FileHandle) (
 			}
 			fs, err := gopFuncSymbol(pgf.Mapper, pgf.Tok, decl)
 			if err == nil {
+				log.Printf("开始转换FuncDecl为符号 %s", decl.Name.Name)
 				if file.IsClass {
+					log.Printf("--%s 是classfile,shadow:%t", decl.Name.Name, decl.Shadow)
 					// class file func to method
 					fs.Kind = protocol.Method
 					var name = decl.Name.Name
@@ -89,6 +92,10 @@ func GopDocumentSymbols(ctx context.Context, snapshot Snapshot, fh FileHandle) (
 				}
 			}
 		}
+	}
+	// 输出所有符号
+	for _, sym := range symbols {
+		log.Printf("symbol %s %s %s %s", sym.Name, sym.Kind, sym.Detail, sym.Range)
 	}
 	return symbols, nil
 }
