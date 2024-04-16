@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/goplus/gop"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
 	"golang.org/x/tools/gopls/internal/goxls"
@@ -182,12 +183,19 @@ func gopToggleDetailsCodeLens(ctx context.Context, snapshot Snapshot, fh FileHan
 
 func gopCommandCodeLens(ctx context.Context, snapshot Snapshot, fh FileHandle) ([]protocol.CodeLens, error) {
 	filename := fh.URI().Filename()
-	if strings.HasSuffix(filename, "_test.go") || strings.HasSuffix(filename, "_test.gop") || strings.HasSuffix(filename, "test.gox") {
+	if strings.HasSuffix(filename, "_test.go") || strings.HasSuffix(filename, "_test.gop") {
 		return nil, nil
+	}
+	mod, err := snapshot.GopModForFile(ctx, fh.URI())
+	if err != nil {
+		return nil, err
 	}
 	pgf, err := snapshot.ParseGop(ctx, fh, parser.PackageClauseOnly)
 	if err != nil {
 		return nil, err
+	}
+	if classType, isTest := gop.GetFileClassType(mod, pgf.File, filename); isTest {
+		return goxTestCodeLens(pgf, classType)
 	}
 	if pgf.File.Name.Name == "main" {
 		rng, err := pgf.PosRange(pgf.File.Pos(), pgf.File.Pos())
@@ -203,6 +211,40 @@ func gopCommandCodeLens(ctx context.Context, snapshot Snapshot, fh FileHandle) (
 		return []protocol.CodeLens{
 			{Range: rng, Command: &cmd},
 		}, nil
+	}
+	return nil, nil
+}
+
+func goxTestCodeLens(pgf *ParsedGopFile, classType string) ([]protocol.CodeLens, error) {
+	if pgf.File.Name.Name == "main" {
+		rng, err := pgf.PosRange(pgf.File.Pos(), pgf.File.Pos())
+		if err != nil {
+			return nil, err
+		}
+		pattern := regexp.MustCompile(`^case(?:_)?`) //goxls: remove case or case_
+		if pattern.MatchString(classType) {
+			classType = pattern.ReplaceAllString(classType, "")
+		}
+		args, err := command.MarshalArgs(
+			map[string]string{
+				"functionName": "Test_" + classType,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		codelens := []protocol.CodeLens{
+			{Range: rng, Command: &protocol.Command{
+				Title:   "run test package",
+				Command: "gop.test.package",
+			}},
+			{Range: rng, Command: &protocol.Command{ // goxls: add test cursor as test file
+				Title:     "run file tests",
+				Command:   "gop.test.cursor",
+				Arguments: args,
+			}},
+		}
+		return codelens, nil
 	}
 	return nil, nil
 }
