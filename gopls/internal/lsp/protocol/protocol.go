@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 
 	"golang.org/x/tools/internal/event"
 	"golang.org/x/tools/internal/jsonrpc2"
@@ -149,6 +150,7 @@ func ClientHandlerV2(client Client) jsonrpc2_v2.Handler {
 }
 
 func ServerHandler(server Server, handler jsonrpc2.Handler) jsonrpc2.Handler {
+	log.Printf("ServerHandler")
 	return func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
 		if ctx.Err() != nil {
 			ctx := xcontext.Detach(ctx)
@@ -172,6 +174,7 @@ func ServerHandler(server Server, handler jsonrpc2.Handler) jsonrpc2.Handler {
 }
 
 func ServerHandlerV2(server Server) jsonrpc2_v2.Handler {
+	log.Printf("ServerHandler V2")
 	return jsonrpc2_v2.HandlerFunc(func(ctx context.Context, req *jsonrpc2_v2.Request) (interface{}, error) {
 		if ctx.Err() != nil {
 			return nil, RequestCancelledErrorV2

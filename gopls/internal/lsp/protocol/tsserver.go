@@ -13,6 +13,7 @@ package protocol
 import (
 	"context"
 	"encoding/json"
+	"log"
 
 	"golang.org/x/tools/internal/jsonrpc2"
 )
@@ -232,6 +233,7 @@ func serverDispatch(ctx context.Context, server Server, reply jsonrpc2.Replier, 
 		err := server.Shutdown(ctx)
 		return true, reply(ctx, nil, err)
 	case "textDocument/codeAction":
+		log.Printf("textDocument/codeAction")
 		var params CodeActionParams
 		if err := json.Unmarshal(r.Params(), &params); err != nil {
 			return true, sendParseError(ctx, reply, err)

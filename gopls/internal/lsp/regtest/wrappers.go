@@ -6,6 +6,7 @@ package regtest
 
 import (
 	"encoding/json"
+	"log"
 	"path"
 
 	"golang.org/x/tools/gopls/internal/lsp/command"
@@ -316,6 +317,7 @@ func (e *Env) CheckForFileChanges() {
 // CodeLens calls textDocument/codeLens for the given path, calling t.Fatal on
 // any error.
 func (e *Env) CodeLens(path string) []protocol.CodeLens {
+	log.Printf("Env CodeLens(%q)", path)
 	e.T.Helper()
 	lens, err := e.Editor.CodeLens(e.Ctx, path)
 	if err != nil {

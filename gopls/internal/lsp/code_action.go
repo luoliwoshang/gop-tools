@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"go/ast"
 	"log"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -38,7 +40,16 @@ func (s *Server) codeAction(ctx context.Context, params *protocol.CodeActionPara
 		return nil, err
 	}
 	uri := fh.URI()
-
+	// 输出所有的关于fh的信息
+	log.Println("fh:", fh)
+	log.Println("uri:", uri)
+	log.Println("filename", uri.Filename())
+	log.Println("actual:", filepath.Base(uri.Filename()))
+	fileInfo, err := os.Stat(uri.Filename())
+	if err != nil {
+		log.Println("err:", err)
+	}
+	log.Println("fileInfo:", fileInfo)
 	// Determine the supported actions for this file kind.
 	kind := snapshot.View().FileKind(fh)
 	supportedCodeActions, ok := snapshot.View().Options().SupportedCodeActions[kind]

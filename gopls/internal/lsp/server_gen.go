@@ -8,6 +8,7 @@ package lsp
 
 import (
 	"context"
+	"log"
 
 	"golang.org/x/tools/gopls/internal/lsp/protocol"
 )
@@ -17,6 +18,7 @@ func (s *Server) CodeAction(ctx context.Context, params *protocol.CodeActionPara
 }
 
 func (s *Server) CodeLens(ctx context.Context, params *protocol.CodeLensParams) ([]protocol.CodeLens, error) {
+	log.Printf("Server CodeLens")
 	return s.codeLens(ctx, params)
 }
 

@@ -20,6 +20,7 @@ func (s *Server) definition(ctx context.Context, params *protocol.DefinitionPara
 	ctx, done := event.Start(ctx, "lsp.Server.definition", tag.URI.Of(params.TextDocument.URI))
 	defer done()
 
+	fmt.Println("*Server definition")
 	// TODO(rfindley): definition requests should be multiplexed across all views.
 	snapshot, fh, ok, release, err := s.beginFileRequest(ctx, params.TextDocument.URI, source.UnknownKind)
 	defer release()

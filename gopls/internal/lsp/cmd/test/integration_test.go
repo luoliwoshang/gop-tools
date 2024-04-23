@@ -168,7 +168,6 @@ func h() {
 // TestDefinition tests the 'definition' subcommand (../definition.go).
 func TestDefinition(t *testing.T) {
 	t.Parallel()
-
 	tree := writeTree(t, `
 -- go.mod --
 module example.com

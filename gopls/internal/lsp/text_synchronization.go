@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -77,6 +78,7 @@ func (m ModificationSource) String() string {
 }
 
 func (s *Server) didOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
+	log.Printf("didOpen")
 	ctx, done := event.Start(ctx, "lsp.Server.didOpen", tag.URI.Of(params.TextDocument.URI))
 	defer done()
 
@@ -113,6 +115,7 @@ func (s *Server) didChange(ctx context.Context, params *protocol.DidChangeTextDo
 	ctx, done := event.Start(ctx, "lsp.Server.didChange", tag.URI.Of(params.TextDocument.URI))
 	defer done()
 
+	log.Printf("didChange")
 	uri := params.TextDocument.URI.SpanURI()
 	if !uri.IsFile() {
 		return nil
@@ -264,6 +267,8 @@ func (s *Server) didModifyFiles(ctx context.Context, modifications []source.File
 	// want to observe the completion of change processing until we have received
 	// all diagnostics as well as all server->client notifications done on behalf
 	// of this function.
+	log.Printf("didModifyFiles: modifications=%v, cause=%v", modifications, cause)
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	defer wg.Done()
@@ -283,6 +288,7 @@ func (s *Server) didModifyFiles(ctx context.Context, modifications []source.File
 		// This state check does not prevent races below, and exists only to
 		// produce a better error message. The actual race to the cache should be
 		// guarded by Session.viewMu.
+		log.Println("didModifyFiles: server is shut down")
 		s.stateMu.Unlock()
 		return errors.New("server is shut down")
 	}
@@ -301,6 +307,7 @@ func (s *Server) didModifyFiles(ctx context.Context, modifications []source.File
 
 	snapshots, release, err := s.session.DidModifyFiles(ctx, modifications)
 	if err != nil {
+		log.Printf("didModifyFiles: failed to update snapshots: %v", err)
 		return err
 	}
 
@@ -310,6 +317,7 @@ func (s *Server) didModifyFiles(ctx context.Context, modifications []source.File
 		for _, uri := range uris {
 			mod := modMap[uri]
 			if snapshot.View().Options().ChattyDiagnostics || mod.Action == source.Open || mod.Action == source.Close {
+				log.Printf("didModifyFiles: publishing diagnostics for file: %v", uri)
 				s.mustPublishDiagnostics(uri)
 			}
 		}
@@ -317,6 +325,7 @@ func (s *Server) didModifyFiles(ctx context.Context, modifications []source.File
 
 	wg.Add(1)
 	go func() {
+		log.Println("didModifyFiles: starting diagnostic goroutine")
 		s.diagnoseSnapshots(snapshots, onDisk)
 		release()
 		wg.Done()
@@ -325,6 +334,7 @@ func (s *Server) didModifyFiles(ctx context.Context, modifications []source.File
 	// After any file modifications, we need to update our watched files,
 	// in case something changed. Compute the new set of directories to watch,
 	// and if it differs from the current set, send updated registrations.
+	log.Println("didModifyFiles: updating watched directories")
 	return s.updateWatchedDirectories(ctx)
 }
 
@@ -335,6 +345,7 @@ func DiagnosticWorkTitle(cause ModificationSource) string {
 }
 
 func (s *Server) changedText(ctx context.Context, uri span.URI, changes []protocol.TextDocumentContentChangeEvent) ([]byte, error) {
+	log.Printf("changedText: %v", uri)
 	if len(changes) == 0 {
 		return nil, fmt.Errorf("%w: no content changes provided", jsonrpc2.ErrInternal)
 	}

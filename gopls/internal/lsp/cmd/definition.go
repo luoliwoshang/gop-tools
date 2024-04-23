@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -60,6 +61,7 @@ definition-flags:
 // Run performs the definition query as specified by args and prints the
 // results to stdout.
 func (d *definition) Run(ctx context.Context, args ...string) error {
+	log.Printf("*definition.Run")
 	if len(args) != 1 {
 		return tool.CommandLineErrorf("definition expects 1 argument")
 	}

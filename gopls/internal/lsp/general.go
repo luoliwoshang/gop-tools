@@ -421,14 +421,15 @@ func (s *Server) addFolders(ctx context.Context, folders []protocol.WorkspaceFol
 // updatedSnapshots is the set of snapshots that have been updated.
 func (s *Server) updateWatchedDirectories(ctx context.Context) error {
 	patterns := s.session.FileWatchingGlobPatterns(ctx)
-
 	s.watchedGlobPatternsMu.Lock()
 	defer s.watchedGlobPatternsMu.Unlock()
 
+	log.Printf("before directories: %v", s.watchedGlobPatterns)
 	// Nothing to do if the set of workspace directories is unchanged.
 	if equalURISet(s.watchedGlobPatterns, patterns) {
 		return nil
 	}
+	log.Printf("updating watched directories: %v", patterns)
 
 	// If the set of directories to watch has changed, register the updates and
 	// unregister the previously watched directories. This ordering avoids a

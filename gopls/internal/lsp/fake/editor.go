@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -1047,6 +1048,7 @@ func (e *Editor) RunGenerate(ctx context.Context, dir string) error {
 
 // CodeLens executes a codelens request on the server.
 func (e *Editor) CodeLens(ctx context.Context, path string) ([]protocol.CodeLens, error) {
+	log.Printf("Editor CodeLens(%q)", path)
 	if e.Server == nil {
 		return nil, nil
 	}

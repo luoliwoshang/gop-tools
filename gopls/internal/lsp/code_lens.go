@@ -19,7 +19,7 @@ import (
 )
 
 func (s *Server) codeLens(ctx context.Context, params *protocol.CodeLensParams) ([]protocol.CodeLens, error) {
-	log.Printf("get codelens")
+	log.Printf("*Server codeLens")
 	ctx, done := event.Start(ctx, "lsp.Server.codeLens", tag.URI.Of(params.TextDocument.URI))
 	defer done()
 
