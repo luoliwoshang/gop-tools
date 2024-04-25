@@ -80,15 +80,14 @@ func GopDefinition(ctx context.Context, snapshot Snapshot, fh FileHandle, positi
 
 	// The general case: the cursor is on an identifier.
 	_, obj, _ := gopReferencedObject(pkg, pgf, pos)
-
 	if obj == nil {
 		return nil, nil
 	}
 
 	anonyOvId := false
 	if fun, ok := obj.(*types.Func); ok {
-		for _, ov := range pkg.GopTypesInfo().Implicits {
-			if v, ok := ov.(*types.Func); ok {
+		for ov := range pkg.GopTypesInfo().Implicits {
+			if v, ok := ov.(*ast.FuncLit); ok {
 				if v.Pos() == fun.Pos() {
 					anonyOvId = true
 					break
