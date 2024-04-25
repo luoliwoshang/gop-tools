@@ -79,7 +79,7 @@ func GopDefinition(ctx context.Context, snapshot Snapshot, fh FileHandle, positi
 	}
 
 	// The general case: the cursor is on an identifier.
-	ident, obj, _ := gopReferencedObject(pkg, pgf, pos)
+	_, obj, _ := gopReferencedObject(pkg, pgf, pos)
 
 	if obj == nil {
 		return nil, nil
@@ -87,10 +87,9 @@ func GopDefinition(ctx context.Context, snapshot Snapshot, fh FileHandle, positi
 
 	anonyOvId := false
 	if fun, ok := obj.(*types.Func); ok {
-		overload := pkg.GopTypesInfo().Overloads[ident]
-		for _, ov := range overload {
-			if v, ok := ov.(*types.Func); ok  {
-				if n := len(v.Name()); v.Pos() == fun.Pos() && n > 3 && v.Name()[n-3:n-1] == "__" {
+		for _, ov := range pkg.GopTypesInfo().Implicits {
+			if v, ok := ov.(*types.Func); ok {
+				if v.Pos() == fun.Pos() {
 					anonyOvId = true
 					break
 				}
@@ -101,7 +100,7 @@ func GopDefinition(ctx context.Context, snapshot Snapshot, fh FileHandle, positi
 	if goxls.DbgDefinition {
 		log.Println("gopReferencedObject ret:", obj, "pos:", obj.Pos())
 	}
-	
+
 	// Handle objects with no position: builtin, unsafe.
 	if !obj.Pos().IsValid() {
 		var pgf *ParsedGoFile
@@ -150,12 +149,12 @@ func GopDefinition(ctx context.Context, snapshot Snapshot, fh FileHandle, positi
 		return []protocol.Location{loc}, nil
 	}
 
-	// Finally, map the object position.
 	typeEnd := adjustedObjEnd(obj)
 	if anonyOvId {
 		// goxls: anonymous overload function identifier range
 		typeEnd = obj.Pos() + token.Pos(len("func"))
 	}
+	// Finally, map the object position.
 	loc, err := mapPosition(ctx, pkg.FileSet(), snapshot, obj.Pos(), typeEnd)
 	if goxls.DbgDefinition {
 		log.Println("gopReferencedObject mapPosition:", obj, "err:", err, "loc:", loc)
