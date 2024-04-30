@@ -48,6 +48,7 @@ println add("Hello", "World")
 		}
 	})
 }
+
 func TestReferencesOnOverloadDecl2(t *testing.T) {
 	const files = `
 -- go.mod --
@@ -88,8 +89,6 @@ println mul(1.2, 3.14)
 		}
 		got := buf.String()
 		want := "def.gop 8:5-8:8\n" + // overload defintion
-			"def.gop 9:4-9:10\n" + // mutInt
-			"def.gop 13:4-13:12\n" + // mutFloat
 			"test.gop 0:8-0:11\n" + // overload int call
 			"test.gop 1:8-1:11\n" + // overload string call
 			"test.gop 2:8-2:11\n" // overload float call
@@ -100,7 +99,7 @@ println mul(1.2, 3.14)
 }
 
 func TestReferencesOnOverloadDecl3(t *testing.T) {
-    const files = `
+	const files = `
 -- go.mod --
 module mod.com
 
@@ -120,24 +119,26 @@ func (foo).mul = (
 )
 -- test.gop --
 var a *foo
-var c = a.mul(100)
+var b = a.mul(100)
+var c = a.mul(a)
 `
-    Run(t, files, func(t *testing.T, env *Env) {
-        env.OpenFile("def.gop")
-        loc := env.GoToDefinition(env.RegexpSearch("def.gop", `func \(foo\)\.(mul) = \(`))
-        refs, err := env.Editor.References(env.Ctx, loc)
-        if err != nil {
-            t.Fatalf("references on (*s).Error failed: %v", err)
-        }
-        var buf strings.Builder
-        for _, ref := range refs {
-            fmt.Fprintf(&buf, "%s %s\n", env.Sandbox.Workdir.URIToPath(ref.URI), ref.Range)
-        }
-        got := buf.String()
-        want := "def.gop 8:11-8:14\n" +
-            "test.gop 1:10-1:13\n"
-        if diff := cmp.Diff(want, got); diff != "" {
-            t.Errorf("unexpected references on (*s).Error (-want +got):\n%s", diff)
-        }
-    })
+	Run(t, files, func(t *testing.T, env *Env) {
+		env.OpenFile("def.gop")
+		loc := env.GoToDefinition(env.RegexpSearch("def.gop", `func \(foo\)\.(mul) = \(`))
+		refs, err := env.Editor.References(env.Ctx, loc)
+		if err != nil {
+			t.Fatalf("references on (*s).Error failed: %v", err)
+		}
+		var buf strings.Builder
+		for _, ref := range refs {
+			fmt.Fprintf(&buf, "%s %s\n", env.Sandbox.Workdir.URIToPath(ref.URI), ref.Range)
+		}
+		got := buf.String()
+		want := "def.gop 8:11-8:14\n" +
+			"test.gop 1:10-1:13\n" +
+			"test.gop 2:10-2:13\n"
+		if diff := cmp.Diff(want, got); diff != "" {
+			t.Errorf("unexpected references on (*s).Error (-want +got):\n%s", diff)
+		}
+	})
 }

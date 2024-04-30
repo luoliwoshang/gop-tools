@@ -615,30 +615,14 @@ func localReferences(pkg Package, targets map[types.Object]bool, correspond bool
 			return true
 		})
 	}
-	// TODO: method
 	// goxls: looking for gop files
 	for _, pgf := range pkg.CompiledGopFiles() {
 		gopast.Inspect(pgf.File, func(n gopast.Node) bool {
 			if id, ok := n.(*gopast.Ident); ok {
 				if obj, ok := pkg.GopTypesInfo().Uses[id]; ok {
-					isOvObj := false
-					//goxls: overload func obj use the origin overload obj
-					if f, ok := obj.(*types.Func); ok && pkg.GopTypesInfo() != nil {
-						for ovid, ov := range pkg.GopTypesInfo().Overloads {
-							for _, o := range ov {
-								if equalOrigin(o, obj) { // obj is overload
-									if f.Type().(*types.Signature).Recv() != nil {
-									} else {
-										obj = pkg.GetTypes().Scope().Lookup(ovid.Name)
-									}
-									isOvObj = true
-									break
-								}
-							}
-							if isOvObj {
-								break
-							}
-						}
+					// goxls: use overload declaration to match
+					if overdecl, overloads := pkg.GopTypesInfo().OverloadOf(id); overdecl != nil && overloads != nil {
+						obj = overdecl
 					}
 					if matches(obj) {
 						report(gopMustLocation(pgf, id), false)
