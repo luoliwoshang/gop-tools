@@ -621,10 +621,8 @@ func localReferences(pkg Package, targets map[types.Object]bool, correspond bool
 			if id, ok := n.(*gopast.Ident); ok {
 				if obj, ok := pkg.GopTypesInfo().Uses[id]; ok {
 					// goxls: use overload declaration to match
-					if overdecl, overloads := pkg.GopTypesInfo().OverloadOf(id); overdecl != nil && overloads != nil {
-						obj = overdecl
-					}
-					if matches(obj) {
+					overdecl, _ := pkg.GopTypesInfo().OverloadOf(id)
+					if matches(obj) || (overdecl != nil && matches(overdecl)) {
 						report(gopMustLocation(pgf, id), false)
 					}
 				}
