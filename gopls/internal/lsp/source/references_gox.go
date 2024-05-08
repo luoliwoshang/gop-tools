@@ -461,7 +461,11 @@ func gopOrdinaryReferences(ctx context.Context, snapshot Snapshot, uri span.URI,
 			// Report the locations of the declaration(s).
 			// TODO(adonovan): what about for corresponding methods? Add tests.
 			for _, node := range objects {
-				report(gopMustLocation(pgf, node), true)
+				if funcLit, ok := node.(*ast.FuncLit); ok {
+					report(gopMustLocation(pgf, funcLit.Type), true)
+				} else {
+					report(gopMustLocation(pgf, node), true)
+				}
 			}
 
 			// Convert targets map to set.
@@ -580,6 +584,9 @@ func gopObjectsAt(info *typesutil.Info, file *ast.File, pos token.Pos) (map[type
 		if obj == nil {
 			return nil, nil, fmt.Errorf("%w for import %s", errNoObjectFound, GopUnquoteImportPath(leaf))
 		}
+		targets[obj] = leaf
+	case *ast.FuncLit:
+		obj := info.Implicits[leaf]
 		targets[obj] = leaf
 	}
 
