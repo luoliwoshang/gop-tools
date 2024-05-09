@@ -84,12 +84,12 @@ func GopDefinition(ctx context.Context, snapshot Snapshot, fh FileHandle, positi
 		return nil, nil
 	}
 
-	anonyOvId := false
+	var anonyOvFunc *ast.FuncLit
 	if fun, ok := obj.(*types.Func); ok {
 		for ov := range pkg.GopTypesInfo().Implicits {
 			if v, ok := ov.(*ast.FuncLit); ok {
 				if v.Pos() == fun.Pos() {
-					anonyOvId = true
+					anonyOvFunc = v
 					break
 				}
 			}
@@ -149,9 +149,8 @@ func GopDefinition(ctx context.Context, snapshot Snapshot, fh FileHandle, positi
 	}
 
 	typeEnd := adjustedObjEnd(obj)
-	if anonyOvId {
-		// goxls: anonymous overload function identifier range
-		typeEnd = obj.Pos() + token.Pos(len("func"))
+	if anonyOvFunc != nil { // goxls: anonymous overload function
+		typeEnd = anonyOvFunc.Type.End()
 	}
 	// Finally, map the object position.
 	loc, err := mapPosition(ctx, pkg.FileSet(), snapshot, obj.Pos(), typeEnd)

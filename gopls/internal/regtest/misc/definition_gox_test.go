@@ -33,7 +33,7 @@ func TestOverloadDefinition1(t *testing.T) {
 			t.Errorf("GoToDefinition: got file %q, want %q", name, want)
 		}
 		// goxls : match the 'func' position of the corresponding overloaded function
-		if want := env.RegexpSearch("def.gop", `(func)\(a, b int\) int`); loc != want {
+		if want := env.RegexpSearch("def.gop", `func\(a, b int\) int`); loc != want {
 			t.Errorf("GoToDefinition: got location %v, want %v", loc, want)
 		}
 	})
