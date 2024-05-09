@@ -5,6 +5,7 @@
 package source
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"go/token"
@@ -586,7 +587,13 @@ func gopObjectsAt(info *typesutil.Info, file *ast.File, pos token.Pos) (map[type
 		}
 		targets[obj] = leaf
 	case *ast.FuncLit:
+		// Look up the implicit *types.Func (overload member)
 		obj := info.Implicits[leaf]
+		if obj == nil {
+			var buf bytes.Buffer
+			typesutil.WriteExpr(&buf, leaf)
+			return nil, nil, fmt.Errorf("%w for %q", errNoObjectFound, buf.String())
+		}
 		targets[obj] = leaf
 	}
 
