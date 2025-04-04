@@ -147,7 +147,9 @@ func GopDefinition(ctx context.Context, snapshot Snapshot, fh FileHandle, positi
 	}
 
 	typeEnd := adjustedObjEnd(obj)
-	if anonyOvFunc != nil { // goxls: anonymous overload function
+	if anonyOvFunc != nil {
+		// goxls:if the object is an anonymous overload function
+		// use the end of the overload function
 		typeEnd = anonyOvFunc.Type.End()
 	}
 	// Finally, map the object position.
@@ -325,18 +327,18 @@ func IsOverloadAnonymousMember(ctx context.Context, snapshot Snapshot, pkg Packa
 		return pkg, funcLit, ovObj, true
 	}
 
-	// goxls:match in variants package
+	// goxls:match in local package
 	if strings.HasSuffix(string(declURI), ".gop") {
-		variants, err := snapshot.MetadataForFile(ctx, declURI)
+		metas, err := snapshot.MetadataForFile(ctx, declURI)
 		if err != nil {
 			return nil, nil, nil, false
 		}
-		for _, m := range variants {
-			varPkgs, err := snapshot.TypeCheck(ctx, m.ID)
+		for _, m := range metas {
+			pkgs, err := snapshot.TypeCheck(ctx, m.ID)
 			if err != nil {
 				return nil, nil, nil, false
 			}
-			varPkg := varPkgs[0]
+			varPkg := pkgs[0]
 			if funcLit, ovObj, ok := inPkg(varPkg); ok {
 				return varPkg, funcLit, ovObj, true
 			}
