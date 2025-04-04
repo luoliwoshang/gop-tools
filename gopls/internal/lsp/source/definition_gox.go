@@ -338,9 +338,9 @@ func IsOverloadAnonymousMember(ctx context.Context, snapshot Snapshot, pkg Packa
 			if err != nil {
 				return nil, nil, nil, false
 			}
-			varPkg := pkgs[0]
-			if funcLit, ovObj, ok := inPkg(varPkg); ok {
-				return varPkg, funcLit, ovObj, true
+			localPkg := pkgs[0]
+			if funcLit, ovObj, ok := inPkg(localPkg); ok {
+				return localPkg, funcLit, ovObj, true
 			}
 		}
 	}
