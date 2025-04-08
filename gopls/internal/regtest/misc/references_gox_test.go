@@ -196,6 +196,143 @@ func main() {
 	runFindRefTest(t, files, testCases)
 }
 
+func TestRefOverloadDeclCrossPackage(t *testing.T) {
+	const files = `
+-- go.mod --
+module mod.com
+
+go 1.19
+-- lib/lib.gop --
+package lib
+
+func Add = (
+	func(a, b int) int {
+		return a + b
+	}
+	func(a, b string) string {
+		return a + b
+	}
+)
+
+func LibAddUse() {
+	println(Add(1, 2))
+}
+
+func MulInt(a, b int) int {
+	return a * b
+}
+
+func MulFloat(a, b float64) float64 {
+	return a * b
+}
+
+func Mul = (
+	MulInt
+	func(a, b string) string {
+		return a + b
+	}
+	MulFloat
+)
+-- lib/gop_autogen.go --
+package lib
+
+import "fmt"
+
+const GopPackage = true
+const _ = true
+const Gopo_Mul = "MulInt,,MulFloat"
+func Add__0(a int, b int) int {
+	return a + b
+}
+func Add__1(a string, b string) string {
+	return a + b
+}
+func MulInt(a int, b int) int {
+	return a * b
+}
+func Mul__1(a string, b string) string {
+	return a + b
+}
+func MulFloat(a float64, b float64) float64 {
+	return a * b
+}
+func LibAddUse() {
+	fmt.Println(Add__0(1, 2))
+}
+-- def.gop --
+func Add = (
+	func(a, b int) int {
+		return a + b
+	}
+	func(a, b string) string {
+		return a + b
+	}
+)
+-- test.gop --
+import "mod.com/lib"
+
+println Add(1, 2)
+println Add("Hello", "World")
+
+println lib.Add(1, 2)
+println lib.Add("Hello", "World")
+
+println lib.Mul(1, 2)
+println lib.Mul("Hello", "World")
+println lib.Mul(200.5, 2.3)
+-- gop_autogen.go --
+package main
+
+import (
+	"fmt"
+	"mod.com/lib"
+)
+
+const _ = true
+func Add__0(a int, b int) int {
+	return a + b
+}
+func Add__1(a string, b string) string {
+	return a + b
+}
+func main() {
+	fmt.Println(Add__0(1, 2))
+	fmt.Println(Add__1("Hello", "World"))
+	fmt.Println(lib.Add__0(1, 2))
+	fmt.Println(lib.Add__1("Hello", "World"))
+	fmt.Println(lib.MulInt(1, 2))
+	fmt.Println(lib.Mul__1("Hello", "World"))
+	fmt.Println(lib.MulFloat(200.5, 2.3))
+}
+`
+	testCases := []refTest{
+		{
+			"def.gop", `Add`, []string{
+				"def.gop 0:5-0:8",   // overload decl
+				"test.gop 2:8-2:11", // overload int call
+				"test.gop 3:8-3:11", // overload string call
+			},
+		},
+		{
+			"lib/lib.gop", `Add`, []string{
+				"lib/lib.gop 2:5-2:8",    // overload decl
+				"lib/lib.gop 12:9-12:12", // same package use
+				"test.gop 5:12-5:15",     // cross package use lib.Add
+				"test.gop 6:12-6:15",     // cross package use lib.Add
+			},
+		},
+		{
+			"lib/lib.gop", `func (Mul) = \(`, []string{
+				"lib/lib.gop 23:5-23:8",
+				"test.gop 8:12-8:15",
+				"test.gop 9:12-9:15",
+				"test.gop 10:12-10:15",
+			},
+		},
+	}
+	runFindRefTest(t, files, testCases)
+}
+
 type refTest struct {
 	defineFile   string
 	defineLocReg string
